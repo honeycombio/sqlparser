@@ -73,8 +73,8 @@ for CreateTable
 }
 
 %token LEX_ERROR
-%token <empty> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR
-%token <empty> ALL DISTINCT AS EXISTS IN IS LIKE BETWEEN NULL ASC DESC VALUES INTO DUPLICATE KEY DEFAULT SET LOCK
+%token <empty> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR OFFSET
+%token <empty> ALL DISTINCT AS EXISTS IN IS LIKE BETWEEN NULL ASC DESC VALUES INTO DUPLICATE KEY DEFAULT SET LOCK BINARY
 %token <bytes> ID STRING NUMBER VALUE_ARG LIST_ARG COMMENT
 %token <empty> LE GE NE NULL_SAFE_EQUAL
 %token <empty> '(' '=' '<' '>' '~'
@@ -1074,6 +1074,10 @@ value:
   {
     $$ = &NullVal{}
   }
+| BINARY STRING
+  {
+    $$ = BinaryVal($2)
+  }
 
 group_by_opt:
   {
@@ -1142,6 +1146,10 @@ limit_opt:
 | LIMIT value_expression ',' value_expression
   {
     $$ = &Limit{Offset: $2, Rowcount: $4}
+  }
+| LIMIT value_expression OFFSET value_expression
+  {
+    $$ = &Limit{Offset: $4, Rowcount: $2}
   }
 
 lock_opt:

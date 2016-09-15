@@ -291,7 +291,7 @@ func (node SelectExprs) Format(buf *TrackedBuffer) {
 	var prefix string
 	for _, n := range node {
 		buf.Myprintf("%s%v", prefix, n)
-		prefix = ", "
+		prefix = ","
 	}
 }
 
@@ -502,6 +502,7 @@ func (*ComparisonExpr) IExpr() {}
 func (*RangeCond) IExpr()      {}
 func (*NullCheck) IExpr()      {}
 func (*ExistsExpr) IExpr()     {}
+func (BinaryVal) IExpr()       {}
 func (StrVal) IExpr()          {}
 func (NumVal) IExpr()          {}
 func (ValArg) IExpr()          {}
@@ -639,6 +640,7 @@ type ValExpr interface {
 	Expr
 }
 
+func (BinaryVal) IValExpr()   {}
 func (StrVal) IValExpr()      {}
 func (NumVal) IValExpr()      {}
 func (ValArg) IValExpr()      {}
@@ -651,6 +653,14 @@ func (*BinaryExpr) IValExpr() {}
 func (*UnaryExpr) IValExpr()  {}
 func (*FuncExpr) IValExpr()   {}
 func (*CaseExpr) IValExpr()   {}
+
+// BinaryVal represents a binary value.
+type BinaryVal []byte
+
+func (node BinaryVal) Format(buf *TrackedBuffer) {
+	s := sqltypes.MakeString([]byte(node))
+	s.EncodeSql(buf)
+}
 
 // StrVal represents a string value.
 type StrVal []byte
