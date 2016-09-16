@@ -902,7 +902,11 @@ const (
 )
 
 func (node *Order) Format(buf *TrackedBuffer) {
-	buf.Myprintf("%v %s", node.Expr, node.Direction)
+	if node.Direction == AST_ASC {
+		buf.Myprintf("%v", node.Expr)
+	} else {
+		buf.Myprintf("%v desc", node.Expr)
+	}
 }
 
 // Limit represents a LIMIT clause.
