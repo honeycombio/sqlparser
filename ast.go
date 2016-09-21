@@ -500,7 +500,6 @@ func (*NotExpr) IExpr()        {}
 func (*ParenBoolExpr) IExpr()  {}
 func (*ComparisonExpr) IExpr() {}
 func (*RangeCond) IExpr()      {}
-func (*NullCheck) IExpr()      {}
 func (*ExistsExpr) IExpr()     {}
 func (BinaryVal) IExpr()       {}
 func (StrVal) IExpr()          {}
@@ -528,7 +527,6 @@ func (*NotExpr) IBoolExpr()        {}
 func (*ParenBoolExpr) IBoolExpr()  {}
 func (*ComparisonExpr) IBoolExpr() {}
 func (*RangeCond) IBoolExpr()      {}
-func (*NullCheck) IBoolExpr()      {}
 func (*ExistsExpr) IBoolExpr()     {}
 
 // AndExpr represents an AND expression.
@@ -584,6 +582,8 @@ const (
 	AST_NSE      = "<=>"
 	AST_IN       = "in"
 	AST_NOT_IN   = "not in"
+	AST_IS       = "is"
+	AST_IS_NOT   = "is not"
 	AST_LIKE     = "like"
 	AST_NOT_LIKE = "not like"
 )
@@ -607,22 +607,6 @@ const (
 
 func (node *RangeCond) Format(buf *TrackedBuffer) {
 	buf.Myprintf("%v %s %v and %v", node.Left, node.Operator, node.From, node.To)
-}
-
-// NullCheck represents an IS NULL or an IS NOT NULL expression.
-type NullCheck struct {
-	Operator string
-	Expr     ValExpr
-}
-
-// NullCheck.Operator
-const (
-	AST_IS_NULL     = "is null"
-	AST_IS_NOT_NULL = "is not null"
-)
-
-func (node *NullCheck) Format(buf *TrackedBuffer) {
-	buf.Myprintf("%v %s", node.Expr, node.Operator)
 }
 
 // ExistsExpr represents an EXISTS expression.
@@ -760,24 +744,26 @@ func (node ListArg) Format(buf *TrackedBuffer) {
 
 // BinaryExpr represents a binary value expression.
 type BinaryExpr struct {
-	Operator    byte
+	Operator    string
 	Left, Right Expr
 }
 
 // BinaryExpr.Operator
 const (
-	AST_BITAND = '&'
-	AST_BITOR  = '|'
-	AST_BITXOR = '^'
-	AST_PLUS   = '+'
-	AST_MINUS  = '-'
-	AST_MULT   = '*'
-	AST_DIV    = '/'
-	AST_MOD    = '%'
+	AST_BITAND = "&"
+	AST_BITOR  = "|"
+	AST_BITXOR = "^"
+	AST_PLUS   = "+"
+	AST_MINUS  = "-"
+	AST_MULT   = "*"
+	AST_DIV    = "/"
+	AST_MOD    = "%"
+	AST_OR     = "or"
+	AST_AND    = "and"
 )
 
 func (node *BinaryExpr) Format(buf *TrackedBuffer) {
-	buf.Myprintf("%v%c%v", node.Left, node.Operator, node.Right)
+	buf.Myprintf("%v %s %v", node.Left, node.Operator, node.Right)
 }
 
 // UnaryExpr represents a unary value expression.
@@ -1041,9 +1027,10 @@ const (
 	AST_DECIMAL = "decimal"
 	AST_NUMERIC = "numeric"
 
-	AST_CHAR    = "char"
-	AST_VARCHAR = "varchar"
-	AST_TEXT    = "text"
+	AST_CHAR       = "char"
+	AST_VARCHAR    = "varchar"
+	AST_TEXT       = "text"
+	AST_MEDIUMTEXT = "mediumtext"
 
 	AST_DATE      = "date"
 	AST_TIME      = "time"

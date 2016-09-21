@@ -109,6 +109,8 @@ var keywords = map[string]int{
 
 	//keywords for creat table
 
+	"engine": ENGINE,
+
 	//datatypes
 	"bit":       BIT,
 	"tinyint":   TINYINT,
@@ -123,9 +125,11 @@ var keywords = map[string]int{
 	"decimal":   DECIMAL,
 	"numeric":   NUMERIC,
 
-	"char":    CHAR,
-	"varchar": VARCHAR,
-	"text":    TEXT,
+	"char":       CHAR,
+	"varchar":    VARCHAR,
+	"text":       TEXT,
+	"mediumtext": MEDIUMTEXT,
+	"charset":    CHARSET,
 
 	"date":      DATE,
 	"time":      TIME,

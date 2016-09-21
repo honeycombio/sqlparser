@@ -97,7 +97,7 @@ for CreateTable
 %left <empty> END
 
 // DDL Tokens
-%token <empty> CREATE ALTER DROP RENAME ANALYZE
+%token <empty> CREATE ALTER DROP RENAME ANALYZE ENGINE
 %token <empty> TABLE INDEX VIEW TO IGNORE IF USING
 %token <empty> SHOW DESCRIBE EXPLAIN
 
@@ -161,7 +161,7 @@ Below are modification to extract primary key
 keywords
 */
 %token <empty> BIT TINYINT SMALLINT MEDIUMINT INT INTEGER BIGINT REAL DOUBLE FLOAT UNSIGNED ZEROFILL DECIMAL NUMERIC DATE TIME TIMESTAMP DATETIME YEAR
-%token <empty> TEXT CHAR VARCHAR
+%token <empty> TEXT CHAR VARCHAR MEDIUMTEXT CHARSET
 
 %token <empty> NULLX AUTO_INCREMENT BOOL APPROXNUM INTNUM
 
@@ -199,7 +199,11 @@ command:
 | other_statement
 
 select_statement:
-  SELECT comment_opt distinct_opt select_expression_list FROM table_expression_list where_expression_opt group_by_opt having_opt order_by_opt limit_opt lock_opt
+  SELECT comment_opt distinct_opt select_expression_list
+  {
+    $$ = &Select{Comments: Comments($2), Distinct: $3, SelectExprs: $4}
+  }
+| SELECT comment_opt distinct_opt select_expression_list FROM table_expression_list where_expression_opt group_by_opt having_opt order_by_opt limit_opt lock_opt
   {
     $$ = &Select{Comments: Comments($2), Distinct: $3, SelectExprs: $4, From: $6, Where: NewWhere(AST_WHERE, $7), GroupBy: GroupBy($8), Having: NewWhere(AST_HAVING, $9), OrderBy: $10, Limit: $11, Lock: $12}
   }
@@ -307,9 +311,18 @@ char_type:
   {
     $$ = AST_TEXT
   }
+| MEDIUMTEXT
+  {
+    $$ = AST_MEDIUMTEXT
+  }
+| MEDIUMTEXT CHARSET sql_id
+  {
+    $$ = AST_MEDIUMTEXT
+    // do something with the charset id?
+  }
 
 numeric_type:
-  int_type length_opt 
+  int_type length_opt
   {
     $$ = $1 + $2
   }
@@ -319,7 +332,7 @@ numeric_type:
   }
 
 int_type:
-  BIT 
+  BIT
   {
     $$ = AST_BIT
   }
@@ -391,7 +404,7 @@ length_opt:
   {
     $$ = ""
   }
-| '(' NUMBER ')'  
+| '(' NUMBER ')'
   {
     $$ = "(" + string($2) + ")"
   }
@@ -469,10 +482,14 @@ column_definition_list:
   }
 
 create_table_statement:
-  CREATE TABLE not_exists_opt ID '(' column_definition_list  ')' 
+  CREATE TABLE not_exists_opt ID '(' column_definition_list  ')' engine_opt
   {
-    $$ = &CreateTable{Name: $4, ColumnDefinitions: $6}  
+    $$ = &CreateTable{Name: $4, ColumnDefinitions: $6}
   }
+
+engine_opt:
+  /* nothing */
+  | ENGINE '=' sql_id
 
 create_statement:
   create_table_statement
@@ -829,13 +846,13 @@ condition:
   {
     $$ = &RangeCond{Left: $1, Operator: AST_NOT_BETWEEN, From: $4, To: $6}
   }
-| value_expression IS NULL
+| value_expression IS value_expression
   {
-    $$ = &NullCheck{Operator: AST_IS_NULL, Expr: $1}
+    $$ = &ComparisonExpr{Left: $1, Operator: AST_IS, Right: $3}
   }
-| value_expression IS NOT NULL
+| value_expression IS NOT value_expression
   {
-    $$ = &NullCheck{Operator: AST_IS_NOT_NULL, Expr: $1}
+    $$ = &ComparisonExpr{Left: $1, Operator: AST_IS_NOT, Right: $4}
   }
 | EXISTS subquery
   {
@@ -947,6 +964,24 @@ value_expression:
   {
     $$ = &BinaryExpr{Left: $1, Operator: AST_MOD, Right: $3}
   }
+/*
+| value_expression OR value_expression
+  {
+    $$ = &BinaryExpr{Left: $1, Operator: AST_OR, Right: $3}
+  }
+| value_expression AND value_expression
+  {
+    $$ = &BinaryExpr{Left: $1, Operator: AST_AND, Right: $3}
+  }
+| value_expression IS value_expression
+  {
+    $$ = &BinaryExpr{Left: $1, Operator: AST_IS, Right: $3}
+  }
+| value_expression IS NOT value_expression
+  {
+    $$ = &BinaryExpr{Left: $1, Operator: AST_IS_NOT, Right: $4}
+  }
+*/
 | unary_operator value_expression %prec UNARY
   {
     if num, ok := $2.(NumVal); ok {
@@ -977,6 +1012,11 @@ value_expression:
 | keyword_as_func '(' select_expression_list ')'
   {
     $$ = &FuncExpr{Name: $1, Exprs: $3}
+  }
+| keyword_as_func '(' select_statement ')'
+  {
+    // XXX(toshok) select_statement is dropped here
+    $$ = &FuncExpr{Name: $1}
   }
 | case_expression
   {
