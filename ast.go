@@ -503,15 +503,17 @@ type NonStarExpr struct {
 
 func (node *NonStarExpr) Format(buf *TrackedBuffer) {
 	buf.Myprintf("%v", node.Expr)
-	if node.As != nil {
+	if len(node.As) > 0 {
 		buf.Myprintf(" as %s", string(node.As))
 	}
 }
 
 func (node *NonStarExpr) Serialize(runes []rune) []rune {
 	runes = node.Expr.Serialize(runes)
-	runes = appendString(runes, " as ")
-	runes = append(runes, node.As...)
+	if len(node.As) > 0 {
+		runes = appendString(runes, " as ")
+		runes = append(runes, node.As...)
+	}
 	return runes
 }
 

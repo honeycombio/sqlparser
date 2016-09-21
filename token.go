@@ -155,7 +155,6 @@ func (tkn *Tokenizer) Lex(lval *yySymType) int {
 		lval.runes = val
 	}
 	tkn.errorToken = val
-	//fmt.Println("token = ", string(val))
 	return typ
 }
 
@@ -212,9 +211,8 @@ func (tkn *Tokenizer) Scan() (int, []rune) {
 		case '.':
 			if isDigit(tkn.lastChar) {
 				return tkn.scanNumber(true)
-			} else {
-				return int(ch), nil
 			}
+			return int(ch), nil
 		case '/':
 			switch tkn.lastChar {
 			case '/':
@@ -253,22 +251,20 @@ func (tkn *Tokenizer) Scan() (int, []rune) {
 			if tkn.lastChar == '=' {
 				tkn.next()
 				return GE, nil
-			} else {
-				return int(ch), nil
 			}
+			return int(ch), nil
 		case '!':
 			if tkn.lastChar == '=' {
 				tkn.next()
 				return NE, nil
-			} else {
-				return LEX_ERROR, []rune("!")
 			}
+			return LEX_ERROR, []rune("!")
 		case '\'', '"':
 			return tkn.scanString(ch, STRING)
 		case '`':
 			return tkn.scanLiteralIdentifier()
 		default:
-			return LEX_ERROR, []rune{rune(ch)}
+			return LEX_ERROR, []rune{ch}
 		}
 	}
 }
@@ -286,24 +282,24 @@ func (tkn *Tokenizer) scanIdentifier() (int, []rune) {
 	for tkn.next(); isLetter(tkn.lastChar) || isDigit(tkn.lastChar); tkn.next() {
 	}
 	scanned := tkn.InRunes[startPos : tkn.Position-1]
-	if keywordId, found := keywords[string(scanned)]; found {
-		return keywordId, scanned
+	if keywordID, found := keywords[string(scanned)]; found {
+		return keywordID, scanned
 	}
 	return ID, scanned
 }
 
 func (tkn *Tokenizer) scanLiteralIdentifier() (int, []rune) {
-	startPos := tkn.Position - 2
+	startPos := tkn.Position - 1
 	if !isLetter(tkn.lastChar) {
 		return LEX_ERROR, tkn.InRunes[startPos : startPos+1]
 	}
 	for tkn.next(); isLetter(tkn.lastChar) || isDigit(tkn.lastChar); tkn.next() {
 	}
 	if tkn.lastChar != '`' {
-		return LEX_ERROR, tkn.InRunes[startPos : tkn.Position-1]
+		return LEX_ERROR, tkn.InRunes[startPos : tkn.Position-2]
 	}
 	tkn.next()
-	return ID, tkn.InRunes[startPos : tkn.Position-1]
+	return ID, tkn.InRunes[startPos : tkn.Position-2]
 }
 
 func (tkn *Tokenizer) scanBindVar() (int, []rune) {
