@@ -5,8 +5,6 @@
 %{
 package sqlparser
 
-import "bytes"
-
 func SetParseTree(yylex interface{}, stmt Statement) {
   yylex.(*Tokenizer).ParseTree = stmt
 }
@@ -20,10 +18,8 @@ func ForceEOF(yylex interface{}) {
 }
 
 var (
-  SHARE =        []byte("share")
-  MODE  =        []byte("mode")
-  IF_BYTES =     []byte("if")
-  VALUES_BYTES = []byte("values")
+  SHARE = "share"
+  MODE  = "mode"
 )
 
 %}
@@ -32,10 +28,9 @@ var (
   empty       struct{}
   statement   Statement
   selStmt     SelectStatement
-  byt         byte
-  bytes       []byte
-  bytes2      [][]byte
+  runes2      [][]rune
   runes       []rune
+  run         rune
   str         string
   selectExprs SelectExprs
   selectExpr  SelectExpr
@@ -74,33 +69,33 @@ for CreateTable
 }
 
 %token LEX_ERROR
-%token <empty> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR OFFSET
-%token <empty> ALL DISTINCT AS EXISTS IN IS LIKE BETWEEN NULL ASC DESC VALUES INTO DUPLICATE KEY DEFAULT SET LOCK BINARY
-%token <bytes> ID STRING NUMBER VALUE_ARG LIST_ARG COMMENT
+%token <runes> SELECT INSERT UPDATE DELETE FROM WHERE GROUP HAVING ORDER BY LIMIT FOR OFFSET
+%token <runes> ALL DISTINCT AS EXISTS IN IS LIKE BETWEEN NULL ASC DESC VALUES INTO DUPLICATE KEY DEFAULT SET LOCK BINARY
+%token <runes> ID STRING NUMBER VALUE_ARG LIST_ARG COMMENT
 %token <empty> LE GE NE NULL_SAFE_EQUAL
 %token <empty> '(' '=' '<' '>' '~'
 
-%token <empty> PRIMARY
-%token <empty> UNIQUE
-%left <empty> UNION MINUS EXCEPT INTERSECT
+%token <runes> PRIMARY
+%token <runes> UNIQUE
+%left <runes> UNION MINUS EXCEPT INTERSECT
 %left <empty> ','
-%left <empty> JOIN STRAIGHT_JOIN LEFT RIGHT INNER OUTER CROSS NATURAL USE FORCE
-%left <empty> ON
-%left <empty> OR
-%left <empty> AND
-%right <empty> NOT
+%left <runes> JOIN STRAIGHT_JOIN LEFT RIGHT INNER OUTER CROSS NATURAL USE FORCE
+%left <runes> ON
+%left <runes> OR
+%left <runes> AND
+%right <runes> NOT
 %left <empty> '&' '|' '^'
 %left <empty> '+' '-'
 %left <empty> '*' '/' '%'
 %nonassoc <empty> '.' 
 %left <empty> UNARY 
-%right <empty> CASE WHEN THEN ELSE
-%left <empty> END
+%right <runes> CASE WHEN THEN ELSE
+%left <runes> END
 
 // DDL Tokens
-%token <empty> CREATE ALTER DROP RENAME ANALYZE ENGINE
-%token <empty> TABLE INDEX VIEW TO IGNORE IF USING
-%token <empty> SHOW DESCRIBE EXPLAIN
+%token <runes> CREATE ALTER DROP RENAME ANALYZE ENGINE
+%token <runes> TABLE INDEX VIEW TO IGNORE IF USING
+%token <runes> SHOW DESCRIBE EXPLAIN
 
 %start any_command
 
@@ -109,12 +104,12 @@ for CreateTable
 %type <statement> insert_statement update_statement delete_statement set_statement
 %type <statement> create_statement alter_statement rename_statement drop_statement
 %type <statement> analyze_statement other_statement
-%type <bytes2> comment_opt comment_list
+%type <runes2> comment_opt comment_list
 %type <str> union_op
 %type <str> distinct_opt
 %type <selectExprs> select_expression_list
 %type <selectExpr> select_expression
-%type <bytes> as_lower_opt as_opt
+%type <runes> as_lower_opt as_opt
 %type <expr> expression
 %type <tableExprs> table_expression_list
 %type <tableExpr> table_expression
@@ -122,7 +117,7 @@ for CreateTable
 %type <smTableExpr> simple_table_expression
 %type <tableName> dml_table_expression
 %type <indexHints> index_hint_list
-%type <bytes2> index_list
+%type <runes2> index_list
 %type <boolExpr> where_expression_opt
 %type <boolExpr> boolean_expression condition
 %type <str> compare
@@ -132,9 +127,9 @@ for CreateTable
 %type <valExprs> value_expression_list
 %type <values> tuple_list
 %type <rowTuple> row_tuple
-%type <bytes> keyword_as_func
+%type <runes> keyword_as_func
 %type <subquery> subquery
-%type <byt> unary_operator
+%type <run> unary_operator
 %type <colName> column_name
 %type <caseExpr> case_expression
 %type <whens> when_expression_list
@@ -152,7 +147,7 @@ for CreateTable
 %type <updateExprs> update_list
 %type <updateExpr> update_expression
 %type <empty> exists_opt not_exists_opt ignore_opt non_rename_operation to_opt constraint_opt using_opt
-%type <bytes> sql_id
+%type <runes> id_or_reserved_word
 %type <empty> force_eof
 
 /*
@@ -316,7 +311,7 @@ char_type:
   {
     $$ = AST_MEDIUMTEXT
   }
-| MEDIUMTEXT CHARSET sql_id
+| MEDIUMTEXT CHARSET ID
   {
     $$ = AST_MEDIUMTEXT
     // do something with the charset id?
@@ -490,19 +485,19 @@ create_table_statement:
 
 engine_opt:
   /* nothing */
-  | ENGINE '=' sql_id
+  | ENGINE '=' ID
 
 create_statement:
   create_table_statement
   {
     $$ = $1
   }
-| CREATE constraint_opt INDEX sql_id using_opt ON ID force_eof
+| CREATE constraint_opt INDEX ID using_opt ON ID force_eof
   {
     // Change this to an alter statement
     $$ = &DDL{Action: AST_ALTER, Table: $7, NewName: $7}
   }
-| CREATE VIEW sql_id force_eof
+| CREATE VIEW ID force_eof
   {
     $$ = &DDL{Action: AST_CREATE, NewName: $3}
   }
@@ -517,7 +512,7 @@ alter_statement:
     // Change this to a rename statement
     $$ = &DDL{Action: AST_RENAME, Table: $4, NewName: $7}
   }
-| ALTER VIEW sql_id force_eof
+| ALTER VIEW ID force_eof
   {
     $$ = &DDL{Action: AST_ALTER, Table: $3, NewName: $3}
   }
@@ -533,12 +528,12 @@ drop_statement:
   {
     $$ = &DDL{Action: AST_DROP, Table: $4}
   }
-| DROP INDEX sql_id ON ID
+| DROP INDEX ID ON ID
   {
     // Change this to an alter statement
     $$ = &DDL{Action: AST_ALTER, Table: $5, NewName: $5}
   }
-| DROP VIEW exists_opt sql_id force_eof
+| DROP VIEW exists_opt ID force_eof
   {
     $$ = &DDL{Action: AST_DROP, Table: $4}
   }
@@ -651,11 +646,11 @@ as_lower_opt:
   {
     $$ = nil
   }
-| sql_id
+| ID
   {
     $$ = $1
   }
-| AS sql_id
+| AS ID
   {
     $$ = $2
   }
@@ -744,7 +739,7 @@ ID
   {
     $$ = &TableName{Name: $1}
   }
-| ID '.' ID
+| ID '.' id_or_reserved_word
   {
     $$ = &TableName{Qualifier: $1, Name: $3}
   }
@@ -758,7 +753,7 @@ ID
   {
     $$ = &TableName{Name: $1}
   }
-| ID '.' ID
+| ID '.' id_or_reserved_word
   {
     $$ = &TableName{Qualifier: $1, Name: $3}
   }
@@ -781,11 +776,11 @@ index_hint_list:
   }
 
 index_list:
-  sql_id
+  ID
   {
-    $$ = [][]byte{$1}
+    $$ = [][]rune{$1}
   }
-| index_list ',' sql_id
+| index_list ',' ID
   {
     $$ = append($1, $3)
   }
@@ -998,15 +993,15 @@ value_expression:
       $$ = &UnaryExpr{Operator: $1, Expr: $2}
     }
   }
-| sql_id '(' ')'
+| ID '(' ')'
   {
     $$ = &FuncExpr{Name: $1}
   }
-| sql_id '(' select_expression_list ')'
+| ID '(' select_expression_list ')'
   {
     $$ = &FuncExpr{Name: $1, Exprs: $3}
   }
-| sql_id '(' DISTINCT select_expression_list ')'
+| ID '(' DISTINCT select_expression_list ')'
   {
     $$ = &FuncExpr{Name: $1, Distinct: true, Exprs: $4}
   }
@@ -1027,11 +1022,11 @@ value_expression:
 keyword_as_func:
   IF
   {
-    $$ = IF_BYTES
+    $$ = $1
   }
 | VALUES
   {
-    $$ = VALUES_BYTES
+    $$ = $1
   }
 
 unary_operator:
@@ -1089,11 +1084,11 @@ else_expression_opt:
   }
 
 column_name:
-  sql_id
+  ID
   {
     $$ = &ColName{Name: $1}
   }
-| ID '.' sql_id
+| ID '.' id_or_reserved_word
   {
     $$ = &ColName{Qualifier: $1, Name: $3}
   }
@@ -1118,6 +1113,10 @@ value:
 | BINARY STRING
   {
     $$ = BinaryVal($2)
+  }
+| TIMESTAMP STRING
+  {
+    $$ = TimestampVal($2)
   }
 
 group_by_opt:
@@ -1201,13 +1200,13 @@ lock_opt:
   {
     $$ = AST_FOR_UPDATE
   }
-| LOCK IN sql_id sql_id
+| LOCK IN ID ID
   {
-    if !bytes.Equal($3, SHARE) {
+    if string($3) != SHARE {
       yylex.Error("expecting share")
       return 1
     }
-    if !bytes.Equal($4, MODE) {
+    if string($4) != MODE {
       yylex.Error("expecting mode")
       return 1
     }
@@ -1327,14 +1326,84 @@ constraint_opt:
 
 using_opt:
   { $$ = struct{}{} }
-| USING sql_id
+| USING ID
   { $$ = struct{}{} }
 
-sql_id:
-  ID
-  {
-    $$ = bytes.ToLower($1)
-  }
+id_or_reserved_word:
+  ID { $$ = $1 }
+| SELECT { $$ = $1 }
+| INSERT { $$ = $1 }
+| UPDATE { $$ = $1 }
+| DELETE { $$ = $1 }
+| FROM { $$ = $1 }
+| WHERE { $$ = $1 }
+| GROUP { $$ = $1 }
+| HAVING { $$ = $1 }
+| ORDER { $$ = $1 }
+| BY { $$ = $1 }
+| LIMIT { $$ = $1 }
+| FOR { $$ = $1 }
+| OFFSET { $$ = $1 }
+| ALL { $$ = $1 }
+| DISTINCT { $$ = $1 }
+| AS { $$ = $1 }
+| EXISTS { $$ = $1 }
+| IN { $$ = $1 }
+| IS { $$ = $1 }
+| LIKE { $$ = $1 }
+| BETWEEN { $$ = $1 }
+| NULL { $$ = $1 }
+| ASC { $$ = $1 }
+| DESC { $$ = $1 }
+| VALUES { $$ = $1 }
+| INTO { $$ = $1 }
+| DUPLICATE { $$ = $1 }
+| KEY { $$ = $1 }
+| DEFAULT { $$ = $1 }
+| SET { $$ = $1 }
+| LOCK { $$ = $1 }
+| BINARY { $$ = $1 }
+| PRIMARY { $$ = $1 }
+| UNIQUE { $$ = $1 }
+| UNION { $$ = $1 }
+| MINUS { $$ = $1 }
+| EXCEPT { $$ = $1 }
+| INTERSECT { $$ = $1 }
+| JOIN { $$ = $1 }
+| STRAIGHT_JOIN { $$ = $1 }
+| LEFT { $$ = $1 }
+| RIGHT { $$ = $1 }
+| INNER { $$ = $1 }
+| OUTER { $$ = $1 }
+| CROSS { $$ = $1 }
+| NATURAL { $$ = $1 }
+| USE { $$ = $1 }
+| FORCE { $$ = $1 }
+| ON { $$ = $1 }
+| OR { $$ = $1 }
+| AND { $$ = $1 }
+| NOT { $$ = $1 }
+| CASE { $$ = $1 }
+| WHEN { $$ = $1 }
+| THEN { $$ = $1 }
+| ELSE { $$ = $1 }
+| END { $$ = $1 }
+| CREATE { $$ = $1 }
+| ALTER { $$ = $1 }
+| DROP { $$ = $1 }
+| RENAME { $$ = $1 }
+| ANALYZE { $$ = $1 }
+| ENGINE { $$ = $1 }
+| TABLE { $$ = $1 }
+| INDEX { $$ = $1 }
+| VIEW { $$ = $1 }
+| TO { $$ = $1 }
+| IGNORE { $$ = $1 }
+| IF { $$ = $1 }
+| USING { $$ = $1 }
+| SHOW { $$ = $1 }
+| DESCRIBE { $$ = $1 }
+| EXPLAIN { $$ = $1 }
 
 force_eof:
 {

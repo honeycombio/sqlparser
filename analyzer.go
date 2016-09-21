@@ -11,6 +11,7 @@ package sqlparser
 import (
 	"errors"
 	"fmt"
+
 	"github.com/xwb1989/sqlparser/dependency/sqltypes"
 )
 
@@ -128,7 +129,7 @@ func AsInterface(node ValExpr) (interface{}, error) {
 	case ListArg:
 		return string(node), nil
 	case StrVal:
-		return sqltypes.MakeString(node), nil
+		return string(node), nil
 	case NumVal:
 		n, err := sqltypes.BuildNumeric(string(node))
 		if err != nil {

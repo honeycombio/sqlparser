@@ -191,7 +191,19 @@ func (tkn *Tokenizer) Scan() (int, []rune) {
 		switch ch {
 		case EOFCHAR:
 			return 0, nil
-		case '=', ',', ';', '(', ')', '+', '*', '%', '&', '|', '^', '~':
+		case '|':
+			if tkn.lastChar == '|' {
+				tkn.next()
+				return OR, nil
+			}
+			return int(ch), nil
+		case '&':
+			if tkn.lastChar == '&' {
+				tkn.next()
+				return AND, nil
+			}
+			return int(ch), nil
+		case '=', ',', ';', '(', ')', '+', '*', '%', '^', '~':
 			return int(ch), nil
 		case '?':
 			tkn.posVarIndex++
@@ -218,9 +230,8 @@ func (tkn *Tokenizer) Scan() (int, []rune) {
 			if tkn.lastChar == '-' {
 				tkn.next()
 				return tkn.scanCommentType1("--")
-			} else {
-				return int(ch), nil
 			}
+			return int(ch), nil
 		case '<':
 			switch tkn.lastChar {
 			case '>':
