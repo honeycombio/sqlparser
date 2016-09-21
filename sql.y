@@ -103,7 +103,7 @@ for CreateTable
 %type <selStmt> select_statement
 %type <statement> insert_statement update_statement delete_statement set_statement
 %type <statement> create_statement alter_statement rename_statement drop_statement
-%type <statement> analyze_statement other_statement
+%type <statement> analyze_statement
 %type <runes2> comment_opt comment_list
 %type <str> union_op
 %type <str> distinct_opt
@@ -192,7 +192,6 @@ command:
 | rename_statement
 | drop_statement
 | analyze_statement
-| other_statement
 
 select_statement:
   SELECT comment_opt distinct_opt select_expression_list
@@ -542,20 +541,6 @@ analyze_statement:
   ANALYZE TABLE ID
   {
     $$ = &DDL{Action: AST_ALTER, Table: $3, NewName: $3}
-  }
-
-other_statement:
-  SHOW force_eof
-  {
-    $$ = &Other{}
-  }
-| DESCRIBE force_eof
-  {
-    $$ = &Other{}
-  }
-| EXPLAIN force_eof
-  {
-    $$ = &Other{}
   }
 
 comment_opt:
