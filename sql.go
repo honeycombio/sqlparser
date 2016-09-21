@@ -1747,7 +1747,7 @@ yydefault:
 		yyDollar = yyS[yypt-2 : yypt+1]
 		//line sql.y:725
 		{
-			yyVAL.str = AST_JOIN
+			yyVAL.str = AST_INNER_JOIN
 		}
 	case 128:
 		yyDollar = yyS[yypt-2 : yypt+1]

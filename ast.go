@@ -660,6 +660,7 @@ type JoinTableExpr struct {
 // JoinTableExpr.Join
 const (
 	AST_JOIN          = " join "
+	AST_INNER_JOIN    = " inner join "
 	AST_STRAIGHT_JOIN = " straight_join "
 	AST_LEFT_JOIN     = " left join "
 	AST_RIGHT_JOIN    = " right join "

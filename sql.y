@@ -723,7 +723,7 @@ join_type:
   }
 | INNER JOIN
   {
-    $$ = AST_JOIN
+    $$ = AST_INNER_JOIN
   }
 | CROSS JOIN
   {

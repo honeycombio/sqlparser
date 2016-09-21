@@ -289,17 +289,17 @@ func (tkn *Tokenizer) scanIdentifier() (int, []rune) {
 }
 
 func (tkn *Tokenizer) scanLiteralIdentifier() (int, []rune) {
-	startPos := tkn.Position - 1
+	startPos := tkn.Position - 2
 	if !isLetter(tkn.lastChar) {
 		return LEX_ERROR, tkn.InRunes[startPos : startPos+1]
 	}
 	for tkn.next(); isLetter(tkn.lastChar) || isDigit(tkn.lastChar); tkn.next() {
 	}
 	if tkn.lastChar != '`' {
-		return LEX_ERROR, tkn.InRunes[startPos : tkn.Position-2]
+		return LEX_ERROR, tkn.InRunes[startPos : tkn.Position-1]
 	}
 	tkn.next()
-	return ID, tkn.InRunes[startPos : tkn.Position-2]
+	return ID, tkn.InRunes[startPos : tkn.Position-1]
 }
 
 func (tkn *Tokenizer) scanBindVar() (int, []rune) {
