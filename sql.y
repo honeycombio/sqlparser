@@ -35,6 +35,7 @@ var (
   byt         byte
   bytes       []byte
   bytes2      [][]byte
+  runes       []rune
   str         string
   selectExprs SelectExprs
   selectExpr  SelectExpr
