@@ -433,7 +433,7 @@ func (tkn *Tokenizer) scanCommentType2() (int, []rune) {
 		}
 		tkn.next()
 	}
-	return COMMENT, tkn.InRunes[startPos : tkn.Position-1]
+	return COMMENT, tkn.InRunes[startPos : tkn.Position-3]
 }
 
 func (tkn *Tokenizer) next() {
