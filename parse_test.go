@@ -6,8 +6,9 @@ package sqlparser
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGen(t *testing.T) {
@@ -136,6 +137,10 @@ func TestCreatTable5(t *testing.T) {
 		s := String(tree)
 		assert.Equal(t, sql, s)
 	}
+}
+
+func TestParseTruncatedStatement(t *testing.T) {
+	Parse("select * from test where k=\"")
 }
 
 func BenchmarkParse1(b *testing.B) {
