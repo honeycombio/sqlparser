@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xwb1989/sqlparser/dependency/bytes2"
+	"github.com/honeycombio/sqlparser/dependency/bytes2"
 )
 
 const (
