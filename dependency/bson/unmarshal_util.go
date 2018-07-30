@@ -11,7 +11,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/xwb1989/sqlparser/dependency/hack"
+	"github.com/honeycombio/sqlparser/dependency/hack"
 )
 
 // VerifyObject verifies kind to make sure it's
