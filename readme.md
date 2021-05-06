@@ -1,5 +1,10 @@
 [![Build Status](https://travis-ci.org/xwb1989/sqlparser.svg?branch=master)](https://travis-ci.org/xwb1989/sqlparser)
 
+## Known limitations
+This parser currently does not support:
+- Quoted table or column names
+- Table or column names that are reserved keywords
+
 ##Notice
 
 The backbone of this repo is extracted from [youtube/vitess](https://github.com/youtube/vitess).
