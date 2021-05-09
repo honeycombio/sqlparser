@@ -6,6 +6,7 @@ package sqlparser
 
 import (
 	"fmt"
+	"strings"
 )
 
 const EOFCHAR = 0x100
@@ -282,7 +283,7 @@ func (tkn *Tokenizer) scanIdentifier() (int, []rune) {
 	for tkn.next(); isLetter(tkn.lastChar) || isDigit(tkn.lastChar); tkn.next() {
 	}
 	scanned := tkn.InRunes[startPos : tkn.Position-1]
-	if keywordID, found := keywords[string(scanned)]; found {
+	if keywordID, found := keywords[strings.ToLower(string(scanned))]; found {
 		return keywordID, scanned
 	}
 	return ID, scanned
