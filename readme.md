@@ -1,25 +1,26 @@
-[![Build Status](https://travis-ci.org/xwb1989/sqlparser.svg?branch=master)](https://travis-ci.org/xwb1989/sqlparser)
+# sqlparser
 
-[![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/REPO)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
+[![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/sqlparser)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
+[![Build Status](https://travis-ci.org/xwb1989/sqlparser.svg?branch=master)](https://travis-ci.org/xwb1989/sqlparser)
 
 ## Known limitations
 This parser currently does not support:
 - Quoted table or column names
 - Table or column names that are [reserved keywords](https://github.com/honeycombio/sqlparser/blob/aab361df519b84cc65f13f10d895f115a1de8717/token.go#L33)
 
-##Notice
+## Notice
 
 The backbone of this repo is extracted from [youtube/vitess](https://github.com/youtube/vitess).
 
 Inside youtube/vitess there is a very nicely written sql parser. However as it's not a self-contained application, I created this one. 
 It applies the same LICENSE as youtube/vitess.
 
-##What's More In this REPO
+## What's More In this REPO
 
 * Rewrite SQL Queries by self-defined rewriter
 * Able to parse Create Table statements way much better
 
-##Usage
+## Usage
 
     import (
         "github.com/xwb1989/sqlparser"
