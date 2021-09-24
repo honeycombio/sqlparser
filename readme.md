@@ -1,6 +1,6 @@
 # sqlparser
 
-[![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/sqlparser)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
+[![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/sqlparser?color=success)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
 [![Build Status](https://travis-ci.org/xwb1989/sqlparser.svg?branch=master)](https://travis-ci.org/xwb1989/sqlparser)
 
 ## Known limitations
